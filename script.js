@@ -1,3 +1,11 @@
+const sliderData = dataStore.sliderData || [];
+const sections = dataStore.sections || [];
+const meublesPeints = dataStore.meublesPeints || [];
+
+console.log("Slider Data :", sliderData);
+console.log("Sections :", sections);
+console.log("Meubles Peints :", meublesPeints);
+
 // Récupérer tous les liens de navigation
 const navLinks = document.querySelectorAll('.links a');
 
@@ -220,20 +228,224 @@ document.addEventListener('DOMContentLoaded', () => {
       showSlide(currentIndex);
     });
   });
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
+
+  ////////////-----section -generation------///////////////////////////
+  function generateSections(sections) {
+    const container = document.getElementById("sections-container");
+    container.innerHTML = ""; // Réinitialiser le conteneur
+
+    sections.forEach((section, index) => {
+        // Création de la section principale
+        const sectionDiv = document.createElement("div");
+        sectionDiv.classList.add("custom-section");
+        sectionDiv.id = section.id; // ID unique pour chaque section
+
+        // Titre général de la section (h3 centré)
+        const sectionTitle = document.createElement("h3");
+        sectionTitle.textContent = section.name;
+        sectionTitle.classList.add("section-title");
+        sectionDiv.appendChild(sectionTitle);
+
+        // Contenu principal (slider + texte)
+        const contentDiv = document.createElement("div");
+        contentDiv.classList.add("content");
+
+        // Partie gauche (slider)
+        const leftDiv = document.createElement("div");
+        leftDiv.classList.add("section-left");
+
+        const slider = document.createElement("div");
+        slider.classList.add("slider-custom");
+        const slides = document.createElement("div");
+        slides.classList.add("slides-custom");
+
+        // Ajout des images au slider
+        section.slides.forEach(slide => {
+            const img = document.createElement("img");
+            img.src = slide;
+            img.alt = `${section.title} Slide`;
+            slides.appendChild(img);
+        });
+
+        slider.appendChild(slides);
+
+        // Boutons de navigation du slider
+        const buttons = document.createElement("div");
+        buttons.classList.add("slider-buttons-custom");
+
+        const prevButton = document.createElement("button");
+        prevButton.innerText = "<";
+        prevButton.addEventListener("click", () => moveSlide(index, -1));
+
+        const nextButton = document.createElement("button");
+        nextButton.innerText = ">";
+        nextButton.addEventListener("click", () => moveSlide(index, 1));
+
+        buttons.appendChild(prevButton);
+        buttons.appendChild(nextButton);
+        slider.appendChild(buttons);
+
+        leftDiv.appendChild(slider);
+
+        // Partie droite (texte)
+        const rightDiv = document.createElement("div");
+        rightDiv.classList.add("section-right");
+
+        const title = document.createElement("h2");
+        title.textContent = section.title;
+
+        const text = document.createElement("p");
+        text.textContent = section.text;
+
+        rightDiv.appendChild(title);
+        rightDiv.appendChild(text);
+
+        // Ajout des parties gauche et droite au contenu principal
+        contentDiv.appendChild(leftDiv);
+        contentDiv.appendChild(rightDiv);
+
+        // Ajout du contenu principal à la section
+        sectionDiv.appendChild(contentDiv);
+
+        // Ajout de la section principale au conteneur
+        container.appendChild(sectionDiv);
+
+        // Initialisation du slider
+        initSlider(index, slides);
+    });
+}
+
+
+const currentSlides = {};
+
+function initSlider(index, slidesContainer) {
+    currentSlides[index] = 0;
+    updateSlider(index, slidesContainer);
+}
+
+function moveSlide(index, direction) {
+    const slidesContainer = document.querySelectorAll(".slides-custom")[index];
+    const totalSlides = slidesContainer.children.length;
+
+    currentSlides[index] += direction;
+    if (currentSlides[index] < 0) {
+        currentSlides[index] = totalSlides - 1;
+    } else if (currentSlides[index] >= totalSlides) {
+        currentSlides[index] = 0;
+    }
+
+    updateSlider(index, slidesContainer);
+}
+
+function updateSlider(index, slidesContainer) {
+    const slideWidth = slidesContainer.children[0].offsetWidth;
+    slidesContainer.style.transform = `translateX(-${currentSlides[index] * slideWidth}px)`;
+}
+
+// Appel de la fonction pour générer les sections
+generateSections(sections);
   
 
   
+/*------------------------------Meubles peints----------------------*/
+document.addEventListener("DOMContentLoaded", () => {
+  const galleryContainer = document.getElementById("meubles-gallery-container");
+  const modal = document.getElementById("meubles-modal");
+  const modalSlider = document.getElementById("meubles-modal-slider");
+  const modalClose = document.getElementById("meubles-modal-close");
 
+  const prevArrow = document.createElement("button");
+  const nextArrow = document.createElement("button");
+
+  prevArrow.id = "prev";
+  prevArrow.classList.add("slider-arrow");
+  prevArrow.textContent = "<";
+  nextArrow.id = "next";
+  nextArrow.classList.add("slider-arrow");
+  nextArrow.textContent = ">";
+
+  let currentIndex = 0; // Index de l'image active
+
+  // Générer la galerie
+  function generateGallery() {
+    galleryContainer.innerHTML = "";
+    meublesPeints.forEach((item, index) => {
+      const galleryItem = document.createElement("div");
+      galleryItem.classList.add("gallery-item");
+      galleryItem.innerHTML = `<img src="${item.src}" alt="${item.title}" title="${item.title}">`;
+
+      galleryItem.addEventListener("click", () => openModal(index));
+      galleryContainer.appendChild(galleryItem);
+    });
+  }
+
+  // Ouvrir la modale
+  function openModal(index) {
+    currentIndex = index;
+    modalSlider.innerHTML = ""; // Réinitialise le contenu du slider
+
+    meublesPeints.forEach((item) => {
+      const slide = document.createElement("img");
+      slide.src = item.src;
+      slide.alt = item.title;
+      slide.classList.add("slider-image");
+      modalSlider.appendChild(slide);
+    });
+
+    // Ajout des flèches
+    if (!modalSlider.contains(prevArrow)) modalSlider.appendChild(prevArrow);
+    if (!modalSlider.contains(nextArrow)) modalSlider.appendChild(nextArrow);
+
+    updateSlider();
+    modal.classList.remove("hidden");
+  }
+
+  // Mettre à jour le slider
+  function updateSlider() {
+    const slides = modalSlider.querySelectorAll(".slider-image");
+
+    slides.forEach((slide, index) => {
+      if (index === currentIndex) {
+        slide.style.transform = "translateX(0%)";
+        slide.style.zIndex = "2"; // Apporte l'image active au premier plan
+      } else if (index < currentIndex) {
+        slide.style.transform = "translateX(-100%)";
+        slide.style.zIndex = "1"; // Image précédente
+      } else {
+        slide.style.transform = "translateX(100%)";
+        slide.style.zIndex = "1"; // Image suivante
+      }
+      slide.style.transition = "transform 0.5s ease-in-out";
+    });
+
+    // Mettre à jour les informations de texte
+    const { title, description, details, contact } = meublesPeints[currentIndex];
+    document.getElementById("meubles-modal-title").textContent = title || "Titre indisponible";
+    document.getElementById("meubles-modal-description").textContent = description || "Description indisponible";
+    document.getElementById("meubles-modal-details-text").textContent = details || "Détails indisponibles.";
+    document.getElementById("meubles-modal-contact").href = contact || "#";
+  }
+
+  // Navigation
+  prevArrow.addEventListener("click", () => {
+    currentIndex = (currentIndex - 1 + meublesPeints.length) % meublesPeints.length;
+    updateSlider();
+  });
+
+  nextArrow.addEventListener("click", () => {
+    currentIndex = (currentIndex + 1) % meublesPeints.length;
+    updateSlider();
+  });
+
+  // Fermer la modale
+  modalClose.addEventListener("click", () => modal.classList.add("hidden"));
+
+  // Fermer la modale en cliquant à l'extérieur
+  modal.addEventListener("click", (e) => {
+    if (!modalSlider.contains(e.target)) {
+      modal.classList.add("hidden");
+    }
+  });
+
+  generateGallery();
+});
